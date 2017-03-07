@@ -1,4 +1,4 @@
-# \<oc-signin\>
+# \<ct-sign-in-button\>
 
 
 
