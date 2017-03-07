@@ -6,14 +6,14 @@
 <link rel="import" href="../paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../app-route/app-route.html">
 <link rel="import" href="../app-route/app-location.html">
-<link rel="import" href="../oc-core-utils/oc-core.html">
-<link rel="import" href="../oc-user-api/oc-user-api.html">
+<link rel="import" href="../ct-core-utils/ct-core.html">
+<!--<link rel="import" href="../ct-user-api/ct-user-api.html">-->
 
 <!--
-`<oc-signin>` is used to authenticate with ordercloud.
+`<ct-sign-in-button>` is used to authenticate with an API.
 @demo
 -->
-<dom-module id="oc-signin">
+<dom-module id="ct-sign-in-button">
 
   <template>
     <style>
@@ -40,33 +40,33 @@
 
     <iron-localstorage
             id="storage"
-            name="oc-auth"
+            name="ct-auth"
             use-raw
             auto-save-disabled
             on-iron-localstorage-load="_localstorageLoaded"
             on-iron-localstorage-load-empty="_localstorageLoaded"
     ></iron-localstorage>
 
-    <oc-user-api id="usersAPI"></oc-user-api>
+    <!--<ct-user-api id="usersAPI"></ct-user-api>-->
 
   </template>
 
   <script>
     (function () {
-      var OC = window.OC;
+      var CT = window.CT;
       Polymer({
-        is: 'oc-signin',
+        is: 'ct-sign-in-button',
 
         /**
          * Fired when signed in.
          * @param {Object} detail The user object.
-         * @event oc-sign-in
+         * @event ct-sign-in
          */
 
         /**
          * Fired when there is an error during the signin flow.
          * @param {Object} detail The error object.
-         * @event oc-sign-in-error
+         * @event ct-sign-in-error
          */
 
         properties: {
@@ -98,7 +98,7 @@
         signIn: function() {
           // TODO implement "state"
           window.location = [
-            OC.authHost, 'oauth/implicit?response_type=token&client_id=', OC.authClientId,
+            CT.authHost, 'oauth/authorise?response_type=token&client_id=', CT.authClientId,
             '&redirect_uri=', encodeURIComponent(window.location.origin + '/oauth')
           ].join('');
         },
@@ -108,7 +108,7 @@
          */
         signOut: function() {
           this._setToken(null);
-          this.fire('oc-sign-out');
+          this.fire('ct-sign-out');
         },
 
         _computeSignedIn: function(user) {
@@ -138,20 +138,20 @@
           this.$.usersAPI.getLoggedInUser()
                   .then(function(request) {
                     this.user = request.response;
-                    OC.userId = this.user.id;
-                    this.fire('oc-sign-in', request.response);
+                    CT.userId = this.user.id;
+                    this.fire('ct-sign-in', request.response);
                   }.bind(this))
                   .catch(ExpiredTokenError, function() {
                     this._setToken(null);
                     this.signIn();
                   }.bind(this))
                   .catch(function(error) {
-                    this.fire('oc-sign-in-error', error);
+                    this.fire('ct-sign-in-error', error);
                   }.bind(this));
         },
 
         _setToken: function (val) {
-          this.$.storage.value = this.token = OC.token = val;
+          this.$.storage.value = this.token = CT.token = val;
           this.$.storage.save();
         },
 

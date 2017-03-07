@@ -1,6 +1,6 @@
 {
-  "name": "oc-signin",
-  "main": "oc-signin.html",
+  "name": "ct-sign-in-button",
+  "main": "ct-sign-in-button.html",
   "description": "A sign in button",
   "dependencies": {
     "polymer": "Polymer/polymer#^1.4.0",
