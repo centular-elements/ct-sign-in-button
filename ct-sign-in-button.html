@@ -90,7 +90,9 @@
           /**
            * Token redirect uri you've registered for this client
            */
-          tokenRedirectUri: String
+          tokenRedirectUri: String,
+          authHostUrl: String,
+          apiHostUrl: String
         },
 
         observers: [
@@ -107,7 +109,7 @@
          */
         _signIn: function() {
           window.location = [
-            CT.authHost, '/oauth/authorise?response_type=token&client_id=', this.clientId,
+            this.authHostUrl, '/oauth/authorise?response_type=token&client_id=', this.clientId,
             '&redirect_uri=', encodeURIComponent(this.tokenRedirectUri), '&state=0'
           ].join('');
         },
@@ -131,6 +133,7 @@
             this._signedIn = false;
             return;
           }
+          CT.authHost = this.authHostUrl;
           this._signedIn = true;
           /*this.$.usersAPI.getLoggedInUser()
                   .then(function(request) {
