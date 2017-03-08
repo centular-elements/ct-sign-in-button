@@ -24,13 +24,17 @@
       :host {
         display: block;
       }
-      paper-button > iron-icon {
+      /*paper-button > iron-icon {
         margin-right: 0.4em;
+      }*/
+      .menu {
+        color: black;
       }
+
     </style>
 
     <app-location route="{{ route }}"></app-location>
-    <app-route route="[[ route ]]" pattern="/:page" tail="{{ routeData }}"></app-route>
+    <app-route route="[[ route ]]" pattern="[[ _redirectPattern ]]" tail="{{ routeData }}"></app-route>
 
     <iron-localstorage
             id="storage"
@@ -46,10 +50,10 @@
     </template>
 
     <template is="dom-if" if="{{ _signedIn }}">
-      <paper-menu-button>
+      <paper-menu-button horizontal-align="right" horizontal-offset="40" vertical-align="top" vertical-offset="50">
         <paper-icon-button class="dropdown-trigger" icon="icons:account-circle"></paper-icon-button>
-        <div class="dropdown-content">
-          <paper-card class="layout horizontal" image="/default-profile-pic.jpg">
+        <div class="dropdown-content menu">
+          <paper-card class="layout horizontal" image="[[ defaultProfilePic ]]">
             <div class="card-content">
               <p class="layout horizontal center-justified">User name</p>
               <paper-button class="layout horizontal center-justified">My Account</paper-button>
@@ -91,11 +95,22 @@
            * Token redirect uri you've registered for this client
            */
           tokenRedirectUri: String,
+          /**
+           * Authentication server location
+           */
           authHostUrl: String,
-          apiHostUrl: String
+          /**
+           * API location
+           */
+          apiHostUrl: String,
+          /**
+           * Default profile image location
+           */
+          defaultProfilePic: String
         },
 
         observers: [
+          '_getRedirectUriPattern(tokenRedirectUri)',
           '_routeChanged(routeData)',
           '_getUserProfile(token)'
         ],
@@ -104,6 +119,9 @@
           this._setToken(this.$.storage.value);
         },
 
+        _getRedirectUriPattern: function() {
+          this._redirectPattern = new URL(this.tokenRedirectUri).pathname;
+        },
         /**
          * Sign in user. Redirects the user to authorization server for signing in.
          */
@@ -115,18 +133,14 @@
         },
 
         _routeChanged: function(routeData) {
-          if (this.tokenRedirectUri) {
-            this._redirectUrl = new URL(this.tokenRedirectUri);
-
-            if (routeData.prefix !== this._redirectUrl.pathname) {
-              return;
-            }
-            if (routeData.__queryParams.access_token) {
-              this._setToken(routeData.__queryParams.access_token);
-            }
-            // TODO handle errors
-            window.history.pushState(null, '', '/');
+          if (routeData.prefix !== this._redirectPattern) {
+            return;
           }
+          if (routeData.__queryParams.access_token) {
+            this._setToken(routeData.__queryParams.access_token);
+          }
+          // TODO handle errors
+          window.history.pushState(null, '', '/');
         },
 
         _getUserProfile: function(token) {
@@ -138,18 +152,18 @@
           CT.authHost = this.authHostUrl;
           this._signedIn = true;
           /*this.$.usersAPI.getLoggedInUser()
-                  .then(function(request) {
-                    this.user = request.response;
-                    CT.userId = this.user.id;
-                    this.fire('ct-sign-in', request.response);
-                  }.bind(this))
-                  .catch(ExpiredTokenError, function() {
-                    this._setToken(null);
-                    this.signIn();
-                  }.bind(this))
-                  .catch(function(error) {
-                    this.fire('ct-sign-in-error', error);
-                  }.bind(this));*/
+           .then(function(request) {
+           this.user = request.response;
+           CT.userId = this.user.id;
+           this.fire('ct-sign-in', request.response);
+           }.bind(this))
+           .catch(ExpiredTokenError, function() {
+           this._setToken(null);
+           this.signIn();
+           }.bind(this))
+           .catch(function(error) {
+           this.fire('ct-sign-in-error', error);
+           }.bind(this));*/
         },
 
         _setToken: function (val) {
