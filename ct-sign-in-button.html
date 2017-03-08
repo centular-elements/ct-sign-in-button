@@ -115,16 +115,18 @@
         },
 
         _routeChanged: function(routeData) {
-          this._redirectUrl = new URL(this.tokenRedirectUri);
+          if (this.tokenRedirectUri) {
+            this._redirectUrl = new URL(this.tokenRedirectUri);
 
-          if (routeData.prefix !== this._redirectUrl.pathname) {
-            return;
+            if (routeData.prefix !== this._redirectUrl.pathname) {
+              return;
+            }
+            if (routeData.__queryParams.access_token) {
+              this._setToken(routeData.__queryParams.access_token);
+            }
+            // TODO handle errors
+            window.history.pushState(null, '', '/');
           }
-          if (routeData.__queryParams.access_token) {
-            this._setToken(routeData.__queryParams.access_token);
-          }
-          // TODO handle errors
-          window.history.pushState(null,'','/');
         },
 
         _getUserProfile: function(token) {
