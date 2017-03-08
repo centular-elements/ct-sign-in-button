@@ -1,5 +1,6 @@
 <link rel="import" href="../polymer/polymer.html">
 
+<link rel="import" href="../iron-localstorage/iron-localstorage.html">
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../iron-icons/iron-icons.html">
 <link rel="import" href="../paper-button/paper-button.html">
@@ -7,6 +8,9 @@
 <link rel="import" href="../app-route/app-route.html">
 <link rel="import" href="../app-route/app-location.html">
 <link rel="import" href="../ct-core-utils/ct-core.html">
+<link rel="import" href="../paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../paper-card/paper-card.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
 <!--<link rel="import" href="../ct-user-api/ct-user-api.html">-->
 
 <!--
@@ -16,7 +20,7 @@
 <dom-module id="ct-sign-in-button">
 
   <template>
-    <style>
+    <style include="iron-flex iron-flex-alignment">
       :host {
         display: block;
       }
@@ -25,51 +29,77 @@
       }
     </style>
 
-    <paper-button on-tap="_signIn">Sign in</paper-button>
+    <app-location route="{{ route }}"></app-location>
+    <app-route route="[[ route ]]" pattern="/:page" tail="{{ routeData }}"></app-route>
 
-    <!--<template is="dom-if" if="{{ signedIn }}">
-      <paper-icon-button on-tap="signOut" icon="power-settings-new"></paper-icon-button>
-    </template>-->
+    <iron-localstorage
+            id="storage"
+            name="ct-auth"
+            use-raw
+            auto-save-disabled
+            on-iron-localstorage-load="_localStorageLoaded"
+            on-iron-localstorage-load-empty="_localStorageLoaded"
+    ></iron-localstorage>
 
-<!--    <app-location route="{{ route }}"></app-location>
-    <app-route route="[[ route ]]" pattern="/oauth" tail="{{ routeData }}"></app-route>-->
+    <template is="dom-if" if="{{ !_signedIn }}">
+      <paper-button on-tap="_signIn">Sign in</paper-button>
+    </template>
 
+    <template is="dom-if" if="{{ _signedIn }}">
+      <paper-menu-button>
+        <paper-icon-button class="dropdown-trigger" icon="icons:account-circle"></paper-icon-button>
+        <div class="dropdown-content">
+          <paper-card class="layout horizontal" image="/default-profile-pic.jpg">
+            <div class="card-content">
+              <p class="layout horizontal center-justified">User name</p>
+              <paper-button class="layout horizontal center-justified">My Account</paper-button>
+            </div>
+          </paper-card>
+          <div class="layout vertical center-justified">
+            <paper-button>Sign out</paper-button>
+          </div>
+        </div>
+      </paper-menu-button>
 
+    </template>
 
-    <!--<ct-user-api id="usersAPI"></ct-user-api>-->
+    <ct-user-api id="usersAPI"></ct-user-api>
 
   </template>
 
   <script>
     (function () {
+      var CT = window.CT;
       Polymer({
         is: 'ct-sign-in-button',
-
         /**
          * Fired when signed in.
          * @param {Object} detail The user object.
          * @event ct-sign-in
          */
-
         /**
          * Fired when there is an error during the signin flow.
          * @param {Object} detail The error object.
          * @event ct-sign-in-error
          */
-
         properties: {
           /**
-           * Your client id obtained from the developer portal
+           * Your client id obtained from client registration
            */
           clientId: String,
           /**
-           * Token redirect uri where you receive oauth tokens for this application
+           * Token redirect uri you've registered for this client
            */
-          tokenRedirectUri: String,
-          /**
-           * Authentication server host url
-           */
-          authHostUrl: String
+          tokenRedirectUri: String
+        },
+
+        observers: [
+          '_routeChanged(routeData)',
+          '_getUserProfile(token)'
+        ],
+
+        _localStorageLoaded: function() {
+          this._setToken(this.$.storage.value);
         },
 
         /**
@@ -77,18 +107,58 @@
          */
         _signIn: function() {
           window.location = [
-            this.authHostUrl, '/oauth/authorise?response_type=token&client_id=', this.clientId,
-            '&redirect_uri=', this.tokenRedirectUri, '&state=0'
+            CT.authHost, '/oauth/authorise?response_type=token&client_id=', this.clientId,
+            '&redirect_uri=', encodeURIComponent(this.tokenRedirectUri), '&state=0'
           ].join('');
-        }
+        },
+
+        _routeChanged: function(routeData) {
+          this._redirectUrl = new URL(this.tokenRedirectUri);
+
+          if (routeData.prefix !== this._redirectUrl.pathname) {
+            return;
+          }
+          if (routeData.__queryParams.access_token) {
+            this._setToken(routeData.__queryParams.access_token);
+          }
+          // TODO handle errors
+          window.history.pushState(null,'','/');
+        },
+
+        _getUserProfile: function(token) {
+          if (!token) {
+            this.user = null;
+            this._signedIn = false;
+            return;
+          }
+          this._signedIn = true;
+          /*this.$.usersAPI.getLoggedInUser()
+                  .then(function(request) {
+                    this.user = request.response;
+                    CT.userId = this.user.id;
+                    this.fire('ct-sign-in', request.response);
+                  }.bind(this))
+                  .catch(ExpiredTokenError, function() {
+                    this._setToken(null);
+                    this.signIn();
+                  }.bind(this))
+                  .catch(function(error) {
+                    this.fire('ct-sign-in-error', error);
+                  }.bind(this));*/
+        },
+
+        _setToken: function (val) {
+          this.$.storage.value = this.token = CT.token = val;
+          this.$.storage.save();
+        },
 
         /**
          * Sign out the user
          */
-        /*_signOut: function() {
+        signOut: function() {
           this._setToken(null);
           this.fire('ct-sign-out');
-        },*/
+        }
       });
     })();
   </script>

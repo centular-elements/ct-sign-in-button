@@ -4,7 +4,10 @@
     <title>ct-sign-in-button demo</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
-    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../webcomponentsjs/webcomponents-lite.js">
+
+    </script>
+
 
     <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
     <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
@@ -15,12 +18,19 @@
     </style>
   </head>
   <body>
-
+    <script>
+      var CT = window.CT;
+      CT.authHost = "http://localhost:9000";
+      CT.apiHost = "http://localhost:9000";
+    </script>
     <div class="vertical-section-container centered">
       <h3>Basic ct-sign-in-button Demo</h3>
       <demo-snippet>
         <template>
-          <ct-sign-in-button signed-in="{{ authenticated }}" user="{{ user }}"></ct-sign-in-button>
+          <ct-sign-in-button
+                  client-id="a2DhLFFeDaPEKRf-YotK1Ag7tC3NNnH"
+                  token-redirect-uri="http://0.0.0.0:8081/components/ct-sign-in-button/oauth"
+          ></ct-sign-in-button>
         </template>
       </demo-snippet>
     </div>
