@@ -4,7 +4,6 @@
   "description": "A sign in button",
   "dependencies": {
     "polymer": "Polymer/polymer#^1.4.0",
-    "iron-localstorage": "PolymerElements/iron-localstorage#^1.0.5",
     "iron-icon": "PolymerElements/iron-icon#^1.0.8",
     "iron-icons": "PolymerElements/iron-icons#^1.1.3",
     "paper-button": "PolymerElements/paper-button#^1.0.12",
