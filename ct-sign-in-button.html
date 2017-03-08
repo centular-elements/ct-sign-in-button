@@ -26,26 +26,17 @@
     </style>
 
     <template is="dom-if" if="{{ !signedIn }}">
-      <paper-button on-tap="signIn">
-        <iron-icon icon="cloud"></iron-icon> Sign In
-      </paper-button>
+      <paper-button on-tap="signIn">Sign in</paper-button>
     </template>
 
-    <template is="dom-if" if="{{ signedIn }}">
+    <!--<template is="dom-if" if="{{ signedIn }}">
       <paper-icon-button on-tap="signOut" icon="power-settings-new"></paper-icon-button>
-    </template>
+    </template>-->
 
-    <app-location route="{{ route }}"></app-location>
-    <app-route route="[[ route ]]" pattern="/oauth" tail="{{ routeData }}"></app-route>
+<!--    <app-location route="{{ route }}"></app-location>
+    <app-route route="[[ route ]]" pattern="/oauth" tail="{{ routeData }}"></app-route>-->
 
-    <iron-localstorage
-            id="storage"
-            name="ct-auth"
-            use-raw
-            auto-save-disabled
-            on-iron-localstorage-load="_localstorageLoaded"
-            on-iron-localstorage-load-empty="_localstorageLoaded"
-    ></iron-localstorage>
+
 
     <!--<ct-user-api id="usersAPI"></ct-user-api>-->
 
@@ -53,7 +44,6 @@
 
   <script>
     (function () {
-      var CT = window.CT;
       Polymer({
         is: 'ct-sign-in-button',
 
@@ -71,94 +61,36 @@
 
         properties: {
           /**
-           * Is the user signed in
+           * Your client id obtained from the developer portal
            */
-          signedIn: {
-            type: Boolean,
-            computed: '_computeSignedIn(user)',
-            notify: true
-          },
+          clientId: String,
           /**
-           * The signed in user
+           * Token redirect uri where you receive oauth tokens for this application
            */
-          user: {
-            type: Object,
-            notify: true
-          }
+          tokenRedirectUri: String,
+          /**
+           * Authentication server host url
+           */
+          authHostUrl: String
         },
-
-        observers: [
-          '_routeChanged(routeData)',
-          '_authenticateUser(token)'
-        ],
 
         /**
          * Sign in user. Redirects the user to authorization server for signing in.
          */
-        signIn: function() {
-          // TODO implement "state"
+        _signIn: function() {
           window.location = [
-            CT.authHost, 'oauth/authorise?response_type=token&client_id=', CT.authClientId,
-            '&redirect_uri=', encodeURIComponent(window.location.origin + '/oauth')
+            this.authHostUrl, '/oauth/authorise?response_type=token&client_id=', this.clientId,
+            '&redirect_uri=', this.tokenRedirectUri, '&state=0'
           ].join('');
-        },
+        }
 
         /**
          * Sign out the user
          */
-        signOut: function() {
+        /*_signOut: function() {
           this._setToken(null);
           this.fire('ct-sign-out');
-        },
-
-        _computeSignedIn: function(user) {
-          return user !== null;
-        },
-
-        _routeChanged: function(routeData) {
-          if (routeData.prefix !== '/oauth') {
-            return;
-          }
-
-          if (routeData.__queryParams.access_token) {
-            this._setToken(routeData.__queryParams.access_token);
-          }
-
-          // TODO handle errors
-
-          window.history.pushState(null,'','/');
-        },
-
-        _authenticateUser: function(token) {
-          if (!token) {
-            this.user = null;
-            return;
-          }
-
-          this.$.usersAPI.getLoggedInUser()
-                  .then(function(request) {
-                    this.user = request.response;
-                    CT.userId = this.user.id;
-                    this.fire('ct-sign-in', request.response);
-                  }.bind(this))
-                  .catch(ExpiredTokenError, function() {
-                    this._setToken(null);
-                    this.signIn();
-                  }.bind(this))
-                  .catch(function(error) {
-                    this.fire('ct-sign-in-error', error);
-                  }.bind(this));
-        },
-
-        _setToken: function (val) {
-          this.$.storage.value = this.token = CT.token = val;
-          this.$.storage.save();
-        },
-
-        _localstorageLoaded: function() {
-          this._setToken(this.$.storage.value);
-        }
-
+        },*/
       });
     })();
   </script>
