@@ -12,6 +12,7 @@
 <link rel="import" href="../paper-card/paper-card.html">
 <link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../ct-user-api/ct-user-api.html">
+<link rel="import" href="../ct-core-utils/ct-core.html">
 <link rel="import" href="/bower_components/ct-sign-in-button/sign-in-button-style.html">
 
 <!--
@@ -26,6 +27,8 @@
         display: block;
       }
     </style>
+
+    <ct-user-api id="userApi" ></ct-user-api>
 
     <app-location route="{{ route }}"></app-location>
     <app-route route="[[ route ]]" pattern="[[ _redirectPattern ]]" tail="{{ routeData }}"></app-route>
@@ -49,7 +52,7 @@
         <div class="dropdown-content">
           <paper-card class="layout horizontal dropdown" image="[[ defaultProfilePic ]]">
             <div class="card-content">
-              <p class="layout horizontal center-justified user-name">User name</p>
+              <a class="layout horizontal center-justified user-name">[[ _userName ]]</a>
               <paper-button class="layout horizontal center-justified my-account-button">My Account</paper-button>
             </div>
           </paper-card>
@@ -70,6 +73,7 @@
       var CT = window.CT;
       Polymer({
         is: 'ct-sign-in-button',
+        behaviors:[CT.Behaviours.ContextCreator],
         /**
          * Fired when signed in.
          * @param {Object} detail The user object.
@@ -139,28 +143,28 @@
 
         _getUserProfile: function(token) {
           if (!token) {
-            this.user = null;
-            this._signedIn = true;
+            this._signedIn = false;
             return;
           }
-          CT.authHost = this.authHostUrl;
-          this._signedIn = true;
-          /*this.$.usersAPI.getLoggedInUser()
-           .then(function(request) {
-           this.user = request.response;
-           CT.userId = this.user.id;
-           this.fire('ct-sign-in', request.response);
-           }.bind(this))
-           .catch(ExpiredTokenError, function() {
-           this._setToken(null);
-           this.signIn();
-           }.bind(this))
-           .catch(function(error) {
-           this.fire('ct-sign-in-error', error);
-           }.bind(this));*/
+          CT.apiHost = this.apiHostUrl;
+          this.$.userApi.getUser(CT.context.userId)
+                  .then(function(request) {
+                    this._signedIn = true;
+                    this._user = request.response;
+                    this._userName = this._user.firstName + ' ' + this._user.lastName;
+                    this.fire('ct-sign-in', { user: request.response, token: token });
+                  }.bind(this))
+                  .catch(ExpiredTokenError, function() {
+                    this._setToken(null);
+                    this._signIn();
+                  }.bind(this))
+                  .catch(function(error) {
+                    this.fire('ct-sign-in-error', error);
+                  }.bind(this));
         },
 
         _setToken: function (val) {
+          this._setContext(val);
           this.$.storage.value = this.token = CT.token = val;
           this.$.storage.save();
         },
