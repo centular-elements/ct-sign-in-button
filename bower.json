@@ -12,7 +12,8 @@
     "paper-menu-button": "PolymerElements/paper-menu-button#^1.5.2",
     "iron-icons": "PolymerElements/iron-icons#^1.2.0",
     "paper-card": "PolymerElements/paper-card#^1.1.4",
-    "iron-flex-layout": "PolymerElements/iron-flex-layout#^1.3.2"
+    "iron-flex-layout": "PolymerElements/iron-flex-layout#^1.3.2",
+    "ct-user-api": "centular-elements/ct-user-api"
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
