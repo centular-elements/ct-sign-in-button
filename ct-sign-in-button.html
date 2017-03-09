@@ -12,6 +12,7 @@
 <link rel="import" href="../paper-card/paper-card.html">
 <link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
 <!--<link rel="import" href="../ct-user-api/ct-user-api.html">-->
+<link rel="import" href="/sign-in-button-style.html">
 
 <!--
 `<ct-sign-in-button>` is used to authenticate with an API.
@@ -20,7 +21,7 @@
 <dom-module id="ct-sign-in-button">
 
   <template>
-    <style include="iron-flex iron-flex-alignment">
+    <style include="sign-in-button-style iron-flex iron-flex-alignment">
       :host {
         display: block;
       }
@@ -46,21 +47,21 @@
     ></iron-localstorage>
 
     <template is="dom-if" if="{{ !_signedIn }}">
-      <paper-button on-tap="_signIn">Sign in</paper-button>
+      <paper-button class="sign-in-button" on-tap="_signIn">Sign in</paper-button>
     </template>
 
     <template is="dom-if" if="{{ _signedIn }}">
-      <paper-menu-button horizontal-align="right" horizontal-offset="40" vertical-align="top" vertical-offset="50">
+      <paper-menu-button class="user-button" horizontal-align="right" horizontal-offset="40" vertical-align="top" vertical-offset="50">
         <paper-icon-button class="dropdown-trigger" icon="icons:account-circle"></paper-icon-button>
         <div class="dropdown-content menu">
-          <paper-card class="layout horizontal" image="[[ defaultProfilePic ]]">
+          <paper-card class="layout horizontal dropdown" image="[[ defaultProfilePic ]]">
             <div class="card-content">
-              <p class="layout horizontal center-justified">User name</p>
-              <paper-button class="layout horizontal center-justified">My Account</paper-button>
+              <p class="layout horizontal center-justified user-name">User name</p>
+              <paper-button class="layout horizontal center-justified my-account-button">My Account</paper-button>
             </div>
           </paper-card>
           <div class="layout vertical center-justified">
-            <paper-button>Sign out</paper-button>
+            <paper-button class="sign-out-button">Sign out</paper-button>
           </div>
         </div>
       </paper-menu-button>
@@ -146,7 +147,7 @@
         _getUserProfile: function(token) {
           if (!token) {
             this.user = null;
-            this._signedIn = false;
+            this._signedIn = true;
             return;
           }
           CT.authHost = this.authHostUrl;
