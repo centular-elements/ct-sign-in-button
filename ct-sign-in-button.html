@@ -25,13 +25,6 @@
       :host {
         display: block;
       }
-      /*paper-button > iron-icon {
-        margin-right: 0.4em;
-      }*/
-      .menu {
-        color: black;
-      }
-
     </style>
 
     <app-location route="{{ route }}"></app-location>
@@ -53,7 +46,7 @@
     <template is="dom-if" if="{{ _signedIn }}">
       <paper-menu-button class="user-button" horizontal-align="right" horizontal-offset="40" vertical-align="top" vertical-offset="50">
         <paper-icon-button class="dropdown-trigger" icon="icons:account-circle"></paper-icon-button>
-        <div class="dropdown-content menu">
+        <div class="dropdown-content">
           <paper-card class="layout horizontal dropdown" image="[[ defaultProfilePic ]]">
             <div class="card-content">
               <p class="layout horizontal center-justified user-name">User name</p>
