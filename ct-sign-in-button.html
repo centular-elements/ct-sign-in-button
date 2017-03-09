@@ -57,7 +57,7 @@
             </div>
           </paper-card>
           <div class="layout vertical center-justified">
-            <paper-button class="sign-out-button">Sign out</paper-button>
+            <paper-button class="sign-out-button" on-tap="signOut">Sign out</paper-button>
           </div>
         </div>
       </paper-menu-button>
@@ -104,7 +104,8 @@
           /**
            * Default profile image location
            */
-          defaultProfilePic: String
+          defaultProfilePic: String,
+          afterSignOutUrl: String
         },
 
         observers: [
@@ -155,10 +156,12 @@
                     this.fire('ct-sign-in', { user: request.response, token: token });
                   }.bind(this))
                   .catch(ExpiredTokenError, function() {
+                    this._signedIn = false;
                     this._setToken(null);
                     this._signIn();
                   }.bind(this))
                   .catch(function(error) {
+                    this._signedIn = false;
                     this.fire('ct-sign-in-error', error);
                   }.bind(this));
         },
@@ -174,6 +177,8 @@
          */
         signOut: function() {
           this._setToken(null);
+          window.location = [this.authHostUrl, '/sign-out', '?next=', encodeURIComponent(this.afterSignOutUrl)].join('');
+          this._signedIn = false;
           this.fire('ct-sign-out');
         }
       });
