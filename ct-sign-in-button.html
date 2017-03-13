@@ -173,6 +173,10 @@
           this._setContext(val);
           this.$.storage.value = this.token = CT.token = val;
           this.$.storage.save();
+          if (val == null) {
+            this._signedIn = false;
+            this.fire('ct-sign-out');
+          }
         },
 
         /**
@@ -181,8 +185,6 @@
         signOut: function() {
           this._setToken(null);
           window.location = [this.authHostUrl, '/sign-out', '?next=', encodeURIComponent(this.afterSignOutUrl)].join('');
-          this._signedIn = false;
-          this.fire('ct-sign-out');
         }
       });
     })();
