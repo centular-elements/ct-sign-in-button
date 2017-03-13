@@ -114,7 +114,7 @@
         observers: [
           '_getRedirectUriPattern(tokenRedirectUri)',
           '_routeChanged(routeData)',
-          '_getUserProfile(token)'
+          '_getUserProfile(token, apiHostUrl)'
         ],
 
         _localStorageLoaded: function() {
@@ -145,7 +145,7 @@
           window.history.pushState(null, '', '/');
         },
 
-        _getUserProfile: function(token) {
+        _getUserProfile: function(token, apiHostUrl) {
           if (!token) {
             this._signedIn = false;
             return;
