@@ -1,41 +1,48 @@
+<link rel="import" href="../ct-core-utils/ct-context.html">
+
 <dom-module id="ct-config">
     <template>
     </template>
 
     <script>
-        Polymer({
-            is: 'ct-config',
+        (function () {
+            var CT = window.CT;
+            Polymer({
+                is: 'ct-config',
 
-            properties: {
-                /**
-                 * Your client id obtained from client registration
-                 */
-                clientId: String,
-                /**
-                 * Token redirect uri you've registered for this client
-                 */
-                tokenRedirectUri: String,
-                /**
-                 * Authentication server location
-                 */
-                authServerUrl: String,
-                /**
-                 * API server location
-                 */
-                apiServerUrl: String
-            },
+                properties: {
+                    /**
+                     * Your client id obtained from client registration
+                     */
+                    clientId: String,
+                    /**
+                     * Token redirect uri you've registered for this client
+                     */
+                    tokenRedirectUri: String,
+                    /**
+                     * Authentication host location
+                     */
+                    authHostUrl: String,
+                    /**
+                     * API host location
+                     */
+                    apiHostUrl: String
+                },
 
-            observers: [
-              '_setConfig(clientId, tokenRedirectUri, authServerUrl, apiServerUrl)'
-            ],
+                observers: [
+                    '_setConfig(clientId, tokenRedirectUri, authHostUrl, apiHostUrl)'
+                ],
 
-            _setConfig: function(clientId, tokenRedirectUri, authServerUrl, apiServerUrl) {
-                window.CT.clientId = this.clientId;
-                window.CT.tokenRedirectUri = this.tokenRedirectUri;
-                window.CT.authServerUrl = this.authServerUrl;
-                window.CT.apiServerUrl = this.apiServerUrl;
-                this.fire('ct-config-loaded');
-            }
-        });
+                _setConfig: function (clientId, tokenRedirectUri, authHostUrl, apiHostUrl) {
+                    CT.context = {
+                        clientId: this.clientId,
+                        tokenRedirectUri: this.tokenRedirectUri,
+                        authHostUrl: this.authHostUrl,
+                        apiHostUrl: this.apiHostUrl
+                    };
+                    this.fire('ct-config-loaded');
+                }
+            });
+        })();
     </script>
 </dom-module>

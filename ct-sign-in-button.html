@@ -7,17 +7,18 @@
 <link rel="import" href="../paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../app-route/app-route.html">
 <link rel="import" href="../app-route/app-location.html">
-<link rel="import" href="../ct-core-utils/ct-core.html">
+<link rel="import" href="../ct-core-utils/ct-context.html">
 <link rel="import" href="../paper-menu-button/paper-menu-button.html">
 <link rel="import" href="../paper-card/paper-card.html">
 <link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../ct-user-api/ct-user-api.html">
-<link rel="import" href="../ct-core-utils/ct-core.html">
+<link rel="import" href="../ct-core-utils/ct-context.html">
 
 <link rel="import" href="/bower_components/ct-sign-in-button/sign-in-button-style.html">
 
 <link rel="import" href="ct-token-receiver.html">
 <link rel="import" href="ct-config.html">
+<link rel="import" href="ct-user-identity.html">
 
 <!--
 `<ct-sign-in-button>` is used to authenticate with an API.
@@ -35,14 +36,14 @@
     <ct-config
             client-id="[[ clientId ]]"
             token-redirect-uri="[[ tokenRedirectUri ]]"
-            auth-server-url="[[ authHostUrl ]]"
-            api-server-url="[[ apiHostUrl ]]"
+            auth-host-url="[[ authHostUrl ]]"
+            api-host-url="[[ apiHostUrl ]]"
     ></ct-config>
     <ct-token-receiver
             token-redirect-uri="[[ tokenRedirectUri ]]"
     ></ct-token-receiver>
 
-    <ct-user-api id="userApi" ></ct-user-api>
+    <ct-user-api id="userApi"></ct-user-api>
 
     <template is="dom-if" if="{{ !_signedIn }}">
       <paper-button class="sign-in-button" on-tap="_signIn">Sign in</paper-button>
@@ -107,16 +108,26 @@
 
         listeners: {
           'ct-config-loaded': '_configLoaded',
-          'ct-token-received': '_tokenReceived'
+          'ct-identity-changed': '_identityChanged'
         },
+
+        observers: [
+          '_getUserProfile(_identity, _configReady)'
+        ],
 
         ready: function() {
           this._signedIn = false;
+          this._identity = null;
+          this._configReady = false;
         },
 
-        _tokenReceived: function(token) {
-          if (token) {
-            this._getUserProfile();
+        _configLoaded: function() {
+          this._configReady = true;
+        },
+
+        _identityChanged: function(event, detail) {
+          if (detail) {
+            this._identity = detail;
           }
         },
 
@@ -124,19 +135,21 @@
          * Sign in user. Redirects the user to authorization server for signing in.
          */
         _getUserProfile: function() {
-          this.$.userApi.getUser(CT.context.userId)
-                  .then(function(request) {
-                    this._signedIn = true;
-                    this._user = request.response;
-                    this._userName = this._user.firstName + ' ' + this._user.lastName;
-                  }.bind(this))
-                  .catch(ExpiredTokenError, function() {
-                    this._signedIn = false;
-                    this._signIn();
-                  }.bind(this))
-                  .catch(function(error) {
-                    this._signedIn = false;
-                  }.bind(this));
+          if (this._identity && this._configReady) {
+            this.$.userApi.getUser(this._identity.userId)
+                    .then(function (request) {
+                      this._signedIn = true;
+                      this._user = request.response;
+                      this._userName = this._user.firstName + ' ' + this._user.lastName;
+                    }.bind(this))
+                    .catch(ExpiredTokenError, function () {
+                      this._signedIn = false;
+                      this._signIn();
+                    }.bind(this))
+                    .catch(function (error) {
+                      this._signedIn = false;
+                    }.bind(this));
+          }
         }
       });
     })();

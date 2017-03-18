@@ -1,19 +1,11 @@
 <link rel="import" href="../app-route/app-route.html">
 <link rel="import" href="../app-route/app-location.html">
-<link rel="import" href="../ct-core-utils/ct-core.html">
+<link rel="import" href="ct-user-identity.html">
 
 <dom-module id="ct-token-receiver">
     <template>
         <app-location route="{{ route }}"></app-location>
         <app-route route="[[ route ]]" pattern="[[ _redirectPattern ]]" tail="{{ routeData }}"></app-route>
-        <!--<iron-localstorage
-                id="storage"
-                name="ct-auth"
-                use-raw
-                auto-save-disabled
-                on-iron-localstorage-load="_localStorageLoaded"
-                on-iron-localstorage-load-empty="_localStorageLoaded"
-        ></iron-localstorage>-->
     </template>
 
     <script>
@@ -37,18 +29,16 @@
                 this._redirectPattern = new URL(this.tokenRedirectUri).pathname;
             },
 
-            /*_localStorageLoaded: function() {
-                this._setContext(this.$.storage.value);
-            },*/
-
             _routeChanged: function(routeData) {
                 if (routeData.prefix !== this._redirectPattern) {
                     return;
                 }
                 if (routeData.__queryParams.access_token) {
+                    var previousUser = CT.identity.userId;
                     this._setIdentity(routeData.__queryParams.access_token);
-                    /*this.$.storage.value = routeData.__queryParams.access_token;
-                    this.$.storage.save();*/
+                    if (CT.identity.userId != previousUser) {
+                        this.fire('ct-identity-changed', CT.identity);
+                    }
                 }
                 // TODO handle errors
                 if (CT.currentPage) {

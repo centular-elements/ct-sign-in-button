@@ -1,12 +1,18 @@
 <script>
     window.CT = window.CT || {};
+    CT.identity = CT.identity || {
+                domainId: null,
+                clientId: null,
+                userId: null,
+                token: null
+            };
     window.CT.Behaviours = window.CT.Behaviours || {};
     CT.Behaviours.Identity = {
         _signIn: function() {
             CT.currentPage = window.location;
             window.location = [
-                CT.authServerUrl, '/oauth/authorise?response_type=token&client_id=', CT.clientId,
-                '&redirect_uri=', encodeURIComponent(CT.tokenRedirectUri), '&state=0'
+                CT.context.authHostUrl, '/oauth/authorise?response_type=token&client_id=', CT.context.clientId,
+                '&redirect_uri=', encodeURIComponent(CT.context.tokenRedirectUri), '&state=0'
             ].join('');
         },
 
@@ -14,20 +20,25 @@
             if (jwtToken) {
                 var jwtClaimSetEncoded = jwtToken.split(".")[1];
                 var jwtClaimSet = JSON.parse(atob(jwtClaimSetEncoded));
-                CT.context = {
+                CT.identity = {
                     domainId: jwtClaimSet.did,
                     clientId: jwtClaimSet.cid,
                     userId: jwtClaimSet.uid,
                     token: jwtToken
                 }
             } else {
-                CT.context = null
+                CT.identity = {
+                    domainId: null,
+                    clientId: null,
+                    userId: null,
+                    token: null
+                };
             }
         },
 
         _signOut: function() {
             this._setIdentity(null);
-            window.location = [this.authHostUrl, '/sign-out', '?next=', encodeURIComponent(this.afterSignOutUrl)].join('');
+            window.location = [CT.context.authHostUrl, '/sign-out', '?next=', encodeURIComponent(this.afterSignOutUrl)].join('');
         }
     }
 </script>
