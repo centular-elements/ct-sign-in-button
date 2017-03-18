@@ -1,0 +1,41 @@
+<dom-module id="ct-config">
+    <template>
+    </template>
+
+    <script>
+        Polymer({
+            is: 'ct-config',
+
+            properties: {
+                /**
+                 * Your client id obtained from client registration
+                 */
+                clientId: String,
+                /**
+                 * Token redirect uri you've registered for this client
+                 */
+                tokenRedirectUri: String,
+                /**
+                 * Authentication server location
+                 */
+                authServerUrl: String,
+                /**
+                 * API server location
+                 */
+                apiServerUrl: String
+            },
+
+            observers: [
+              '_setConfig(clientId, tokenRedirectUri, authServerUrl, apiServerUrl)'
+            ],
+
+            _setConfig: function(clientId, tokenRedirectUri, authServerUrl, apiServerUrl) {
+                window.CT.clientId = this.clientId;
+                window.CT.tokenRedirectUri = this.tokenRedirectUri;
+                window.CT.authServerUrl = this.authServerUrl;
+                window.CT.apiServerUrl = this.apiServerUrl;
+                this.fire('ct-config-loaded');
+            }
+        });
+    </script>
+</dom-module>

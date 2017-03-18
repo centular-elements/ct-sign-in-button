@@ -1,0 +1,60 @@
+<link rel="import" href="../app-route/app-route.html">
+<link rel="import" href="../app-route/app-location.html">
+<link rel="import" href="../ct-core-utils/ct-core.html">
+
+<dom-module id="ct-token-receiver">
+    <template>
+        <app-location route="{{ route }}"></app-location>
+        <app-route route="[[ route ]]" pattern="[[ _redirectPattern ]]" tail="{{ routeData }}"></app-route>
+        <!--<iron-localstorage
+                id="storage"
+                name="ct-auth"
+                use-raw
+                auto-save-disabled
+                on-iron-localstorage-load="_localStorageLoaded"
+                on-iron-localstorage-load-empty="_localStorageLoaded"
+        ></iron-localstorage>-->
+    </template>
+
+    <script>
+        Polymer({
+            is: 'ct-token-receiver',
+            behaviors:[CT.Behaviours.Identity],
+
+            properties: {
+                /**
+                 * Token redirect uri you've registered for this client
+                 */
+                tokenRedirectUri: String
+            },
+
+            observers: [
+                '_setRoutePattern(tokenRedirectUri)',
+                '_routeChanged(routeData)'
+            ],
+
+            _setRoutePattern: function() {
+                this._redirectPattern = new URL(this.tokenRedirectUri).pathname;
+            },
+
+            /*_localStorageLoaded: function() {
+                this._setContext(this.$.storage.value);
+            },*/
+
+            _routeChanged: function(routeData) {
+                if (routeData.prefix !== this._redirectPattern) {
+                    return;
+                }
+                if (routeData.__queryParams.access_token) {
+                    this._setIdentity(routeData.__queryParams.access_token);
+                    /*this.$.storage.value = routeData.__queryParams.access_token;
+                    this.$.storage.save();*/
+                }
+                // TODO handle errors
+                if (CT.currentPage) {
+                    window.history.pushState(null, '', CT.currentPage);
+                }
+            }
+        });
+    </script>
+</dom-module>

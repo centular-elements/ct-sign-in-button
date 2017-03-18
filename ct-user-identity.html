@@ -1,0 +1,33 @@
+<script>
+    window.CT = window.CT || {};
+    window.CT.Behaviours = window.CT.Behaviours || {};
+    CT.Behaviours.Identity = {
+        _signIn: function() {
+            CT.currentPage = window.location;
+            window.location = [
+                CT.authServerUrl, '/oauth/authorise?response_type=token&client_id=', CT.clientId,
+                '&redirect_uri=', encodeURIComponent(CT.tokenRedirectUri), '&state=0'
+            ].join('');
+        },
+
+        _setIdentity: function(jwtToken) {
+            if (jwtToken) {
+                var jwtClaimSetEncoded = jwtToken.split(".")[1];
+                var jwtClaimSet = JSON.parse(atob(jwtClaimSetEncoded));
+                CT.context = {
+                    domainId: jwtClaimSet.did,
+                    clientId: jwtClaimSet.cid,
+                    userId: jwtClaimSet.uid,
+                    token: jwtToken
+                }
+            } else {
+                CT.context = null
+            }
+        },
+
+        _signOut: function() {
+            this._setIdentity(null);
+            window.location = [this.authHostUrl, '/sign-out', '?next=', encodeURIComponent(this.afterSignOutUrl)].join('');
+        }
+    }
+</script>

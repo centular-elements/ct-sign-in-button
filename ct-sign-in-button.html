@@ -13,7 +13,11 @@
 <link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../ct-user-api/ct-user-api.html">
 <link rel="import" href="../ct-core-utils/ct-core.html">
+
 <link rel="import" href="/bower_components/ct-sign-in-button/sign-in-button-style.html">
+
+<link rel="import" href="ct-token-receiver.html">
+<link rel="import" href="ct-config.html">
 
 <!--
 `<ct-sign-in-button>` is used to authenticate with an API.
@@ -28,19 +32,17 @@
       }
     </style>
 
+    <ct-config
+            client-id="[[ clientId ]]"
+            token-redirect-uri="[[ tokenRedirectUri ]]"
+            auth-server-url="[[ authHostUrl ]]"
+            api-server-url="[[ apiHostUrl ]]"
+    ></ct-config>
+    <ct-token-receiver
+            token-redirect-uri="[[ tokenRedirectUri ]]"
+    ></ct-token-receiver>
+
     <ct-user-api id="userApi" ></ct-user-api>
-
-    <app-location route="{{ route }}"></app-location>
-    <app-route route="[[ route ]]" pattern="[[ _redirectPattern ]]" tail="{{ routeData }}"></app-route>
-
-    <iron-localstorage
-            id="storage"
-            name="ct-auth"
-            use-raw
-            auto-save-disabled
-            on-iron-localstorage-load="_localStorageLoaded"
-            on-iron-localstorage-load-empty="_localStorageLoaded"
-    ></iron-localstorage>
 
     <template is="dom-if" if="{{ !_signedIn }}">
       <paper-button class="sign-in-button" on-tap="_signIn">Sign in</paper-button>
@@ -57,7 +59,7 @@
             </div>
           </paper-card>
           <div class="layout vertical center-justified">
-            <paper-button class="sign-out-button" on-tap="signOut">Sign out</paper-button>
+            <paper-button class="sign-out-button" on-tap="_signOut">Sign out</paper-button>
           </div>
         </div>
       </paper-menu-button>
@@ -73,7 +75,7 @@
       var CT = window.CT;
       Polymer({
         is: 'ct-sign-in-button',
-        behaviors:[CT.Behaviours.ContextCreator],
+        behaviors:[CT.Behaviours.Identity],
         /**
          * Fired when signed in.
          * @param {Object} detail The user object.
@@ -90,101 +92,51 @@
            */
           clientId: String,
           /**
-           * Token redirect uri you've registered for this client
+           * Token redirect uri registered for this client
            */
           tokenRedirectUri: String,
           /**
-           * Authentication server location
+           * Authentication host location
            */
           authHostUrl: String,
           /**
-           * API location
+           * API host location
            */
-          apiHostUrl: String,
-          /**
-           * Default profile image location
-           */
-          defaultProfilePic: String,
-          /**
-           * Location to go to after the user signed out
-           */
-          afterSignOutUrl: String
+          apiHostUrl: String
         },
 
-        observers: [
-          '_getRedirectUriPattern(tokenRedirectUri)',
-          '_routeChanged(routeData)',
-          '_getUserProfile(token, apiHostUrl)'
-        ],
-
-        _localStorageLoaded: function() {
-          this._setToken(this.$.storage.value);
+        listeners: {
+          'ct-config-loaded': '_configLoaded',
+          'ct-token-received': '_tokenReceived'
         },
 
-        _getRedirectUriPattern: function() {
-          this._redirectPattern = new URL(this.tokenRedirectUri).pathname;
+        ready: function() {
+          this._signedIn = false;
         },
+
+        _tokenReceived: function(token) {
+          if (token) {
+            this._getUserProfile();
+          }
+        },
+
         /**
          * Sign in user. Redirects the user to authorization server for signing in.
          */
-        _signIn: function() {
-          window.location = [
-            this.authHostUrl, '/oauth/authorise?response_type=token&client_id=', this.clientId,
-            '&redirect_uri=', encodeURIComponent(this.tokenRedirectUri), '&state=0'
-          ].join('');
-        },
-
-        _routeChanged: function(routeData) {
-          if (routeData.prefix !== this._redirectPattern) {
-            return;
-          }
-          if (routeData.__queryParams.access_token) {
-            this._setToken(routeData.__queryParams.access_token);
-          }
-          // TODO handle errors
-          window.history.pushState(null, '', '/');
-        },
-
-        _getUserProfile: function(token, apiHostUrl) {
-          if (!token) {
-            this._signedIn = false;
-            return;
-          }
-          CT.apiHost = this.apiHostUrl;
+        _getUserProfile: function() {
           this.$.userApi.getUser(CT.context.userId)
                   .then(function(request) {
                     this._signedIn = true;
                     this._user = request.response;
                     this._userName = this._user.firstName + ' ' + this._user.lastName;
-                    this.fire('ct-sign-in', { user: request.response, token: token });
                   }.bind(this))
                   .catch(ExpiredTokenError, function() {
                     this._signedIn = false;
-                    this._setToken(null);
                     this._signIn();
                   }.bind(this))
                   .catch(function(error) {
                     this._signedIn = false;
-                    this.fire('ct-sign-in-error', error);
                   }.bind(this));
-        },
-
-        _setToken: function (val) {
-          this._setContext(val);
-          this.$.storage.value = this.token = CT.token = val;
-          this.$.storage.save();
-          if (val == null) {
-            this._signedIn = false;
-            this.fire('ct-sign-out');
-          }
-        },
-
-        /**
-         * Sign out the user
-         */
-        signOut: function() {
-          this._setToken(null);
-          window.location = [this.authHostUrl, '/sign-out', '?next=', encodeURIComponent(this.afterSignOutUrl)].join('');
         }
       });
     })();
