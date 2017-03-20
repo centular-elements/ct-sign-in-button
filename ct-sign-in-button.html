@@ -156,6 +156,7 @@
                     this._signedIn = true;
                     this._user = request.response;
                     this._userName = this._user.firstName + ' ' + this._user.lastName;
+                    this.fire('ct-signed-in');
                   }.bind(this))
                   .catch(ExpiredTokenError, function () {
                     this._signedIn = false;
@@ -169,6 +170,7 @@
 
       _signOutTapped: function() {
         this.$.identity.signOut(window.location.href);
+        this.fire('ct-signed-out');
       }
     });
   </script>
