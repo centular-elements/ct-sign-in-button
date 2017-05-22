@@ -38,8 +38,10 @@
     <iron-localstorage
             name="user-token"
             value="{{_token}}"
-            on-iron-localstorage-load="_initStoredUser">
-    </iron-localstorage>
+            use-raw
+            on-iron-localstorage-load="_initStoredUser"
+            on-iron-localstorage-load-empty="_noStoredUserToken"
+    ></iron-localstorage>
 
     <ct-config
             client-id="[[ clientId ]]"
@@ -61,7 +63,7 @@
     <ct-user-api id="userApi"></ct-user-api>
 
     <template is="dom-if" if="{{ !_signedIn }}">
-      <paper-button class="sign-in-button" on-tap="_signInTapped">Sign in</paper-button>
+      <paper-button class="sign-in-button" on-tap="_signInTapped">[[ _buttonLabel ]]</paper-button>
     </template>
 
     <template is="dom-if" if="{{ _signedIn }}">
@@ -141,6 +143,10 @@
 
       _initStoredUser: function() {
         this.$.identity.setToken(this._token)
+      },
+
+      _noStoredUserToken: function() {
+        this._buttonLabel = 'Sign In';
       },
 
       _configLoaded: function() {
