@@ -1,6 +1,7 @@
 <link rel="import" href="../polymer/polymer.html">
 
 <link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../iron-localstorage/iron-localstorage.html">
 <link rel="import" href="../iron-icons/iron-icons.html">
 <link rel="import" href="../paper-button/paper-button.html">
 <link rel="import" href="../paper-icon-button/paper-icon-button.html">
@@ -33,6 +34,12 @@
         margin: 10px;
       }
     </style>
+
+    <iron-localstorage
+            name="user-token"
+            value="{{_token}}"
+            on-iron-localstorage-load="_initStoredUser">
+    </iron-localstorage>
 
     <ct-config
             client-id="[[ clientId ]]"
@@ -130,6 +137,10 @@
         this._signedIn = false;
         this._identity = null;
         this._configReady = false;
+      },
+
+      _initStoredUser: function() {
+        this.$.identity.setToken(this._token)
       },
 
       _configLoaded: function() {
