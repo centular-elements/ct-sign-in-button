@@ -87,109 +87,110 @@
   </template>
 
   <script>
-    Polymer({
-      is: 'ct-sign-in-button',
-      /**
-       * Fired when signed in.
-       * @param {Object} detail The user object.
-       * @event ct-sign-in
-       */
-      /**
-       * Fired when there is an error during the signin flow.
-       * @param {Object} detail The error object.
-       * @event ct-sign-in-error
-       */
-      properties: {
-        /**
-         * Your client id obtained from client registration
-         */
-        clientId: String,
-        /**
-         * Token redirect uri registered for this client
-         */
-        tokenRedirectUri: String,
-        /**
-         * Authentication host location
-         */
-        authHostUrl: String,
-        /**
-         * API host location
-         */
-        apiHostUrl: String,
-        /**
-         * Page to after successful sign in. If not provided, the current page will be used
-         */
-        signedInPage: String,
-        /**
-         * Page to after sign out. If not provided, the current page will be used
-         */
-        signedOutPage: String
-      },
+      Polymer({
+          is: 'ct-sign-in-button',
+          /**
+           * Fired when signed in.
+           * @param {Object} detail The user object.
+           * @event ct-sign-in
+           */
+          /**
+           * Fired when there is an error during the signin flow.
+           * @param {Object} detail The error object.
+           * @event ct-sign-in-error
+           */
+          properties: {
+              /**
+               * Your client id obtained from client registration
+               */
+              clientId: String,
+              /**
+               * Token redirect uri registered for this client
+               */
+              tokenRedirectUri: String,
+              /**
+               * Authentication host location
+               */
+              authHostUrl: String,
+              /**
+               * API host location
+               */
+              apiHostUrl: String,
+              /**
+               * Page to after successful sign in. If not provided, the current page will be used
+               */
+              signedInPage: String,
+              /**
+               * Page to after sign out. If not provided, the current page will be used
+               */
+              signedOutPage: String
+          },
 
-      listeners: {
-        'ct-config-loaded': '_configLoaded',
-        'ct-identity-changed': '_identityChanged'
-      },
+          listeners: {
+              'ct-config-loaded': '_configLoaded',
+              'ct-identity-changed': '_identityChanged'
+          },
 
-      observers: [
-        '_getUserProfile(_identity, _configReady)'
-      ],
+          observers: [
+              '_getUserProfile(_identity, _configReady)'
+          ],
 
-      ready: function() {
-        this._signedIn = false;
-        this._identity = null;
-        this._configReady = false;
-      },
+          ready: function() {
+              this._signedIn = false;
+              this._identity = null;
+              this._configReady = false;
+          },
 
-      _initStoredUser: function() {
-        this.$.identity.setToken(this._token)
-      },
+          _initStoredUser: function() {
+              this.$.identity._hackPageTo(window.location.href);
+              this.$.identity.setToken(this._token)
+          },
 
-      _noStoredUserToken: function() {
-        this._buttonLabel = 'Sign In';
-      },
+          _noStoredUserToken: function() {
+              this._buttonLabel = 'Sign In';
+          },
 
-      _configLoaded: function() {
-        this._configReady = true;
-      },
+          _configLoaded: function() {
+              this._configReady = true;
+          },
 
-      _identityChanged: function(event, detail) {
-        if (detail) {
-          this._identity = detail;
-        }
-      },
+          _identityChanged: function(event, detail) {
+              if (detail) {
+                  this._identity = detail;
+              }
+          },
 
-      _signInTapped: function() {
-        this.$.identity.signIn();
-      },
+          _signInTapped: function() {
+              this.$.identity.signIn();
+          },
 
-      /**
-       * Sign in user. Redirects the user to authorization server for signing in.
-       */
-      _getUserProfile: function() {
-        if (this._identity && this._configReady && !this._signedIn) {
-          this.$.userApi.getUser(this._identity.userId)
-                  .then(function (request) {
-                    this._signedIn = true;
-                    this._user = request.response;
-                    this._userName = this._user.firstName + ' ' + this._user.lastName;
-                    this.fire('ct-signed-in');
-                  }.bind(this))
-                  .catch(ExpiredTokenError, function () {
-                    this._signedIn = false;
-                    this._signIn();
-                  }.bind(this))
-                  .catch(function (error) {
-                    this._signedIn = false;
-                  }.bind(this));
-        }
-      },
+          /**
+           * Sign in user. Redirects the user to authorization server for signing in.
+           */
+          _getUserProfile: function() {
+              if (this._identity && this._configReady && !this._signedIn) {
+                  this.$.userApi.getUser(this._identity.userId)
+                      .then(function (request) {
+                          this._signedIn = true;
+                          this._user = request.response;
+                          this._userName = this._user.firstName + ' ' + this._user.lastName;
+                          this.fire('ct-signed-in');
+                      }.bind(this))
+                      .catch(ExpiredTokenError, function () {
+                          this._signedIn = false;
+                          this._signIn();
+                      }.bind(this))
+                      .catch(function (error) {
+                          this._signedIn = false;
+                      }.bind(this));
+              }
+          },
 
-      _signOutTapped: function() {
-        this.$.identity.signOut(window.location.href);
-        this.fire('ct-signed-out');
-      }
-    });
+          _signOutTapped: function() {
+              this.$.identity.signOut(window.location.href);
+              this.fire('ct-signed-out');
+          }
+      });
   </script>
 
 </dom-module>
