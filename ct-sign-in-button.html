@@ -9,9 +9,7 @@
 <link rel="import" href="../paper-card/paper-card.html">
 <link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
 
-<link rel="import" href="../ct-core-utils/ct-token-receiver.html">
-<link rel="import" href="../ct-core-utils/ct-config.html">
-<link rel="import" href="../ct-core-utils/ct-user-identity.html">
+<link rel="import" href="../ct-core-utils/ct-core.html">
 <link rel="import" href="../ct-user-api/ct-user-api.html">
 
 <link rel="import" href="sign-in-button-style.html">
@@ -22,175 +20,91 @@
 -->
 <dom-module id="ct-sign-in-button">
 
-  <template>
-    <style include="sign-in-button-style iron-flex iron-flex-alignment">
-      :host {
-        display: block;
-      }
-      .my-account-button {
-        margin: 10px;
-      }
-      .sign-out-button {
-        margin: 10px;
-      }
-    </style>
+    <template>
+        <style include="sign-in-button-style iron-flex iron-flex-alignment">
+            :host {
+                display: block;
+            }
+            .my-account-button {
+                margin: 10px;
+            }
+            .sign-out-button {
+                margin: 10px;
+            }
+        </style>
 
-    <iron-localstorage
-            name="user-token"
-            value="{{_token}}"
-            use-raw
-            on-iron-localstorage-load="_initStoredUser"
-            on-iron-localstorage-load-empty="_noStoredUserToken"
-    ></iron-localstorage>
+        <ct-user-api id="userApi"></ct-user-api>
 
-    <ct-config
-            client-id="[[ clientId ]]"
-            token-redirect-uri="[[ tokenRedirectUri ]]"
-            auth-host-url="[[ authHostUrl ]]"
-            api-host-url="[[ apiHostUrl ]]"
-    ></ct-config>
+        <template is="dom-if" if="{{ !_hasIdentity }}">
+            <paper-button class="sign-in-button" on-tap="_signInTapped">[[ _buttonLabel ]]</paper-button>
+        </template>
 
-    <ct-token-receiver
-            token-redirect-uri="[[ tokenRedirectUri ]]"
-    ></ct-token-receiver>
+        <template is="dom-if" if="{{ _hasIdentity }}">
+            <paper-menu-button class="user-button" horizontal-align="right" horizontal-offset="40" vertical-align="top" vertical-offset="50">
+                <paper-icon-button class="dropdown-trigger" icon="icons:account-circle"></paper-icon-button>
+                <div class="dropdown-content">
+                    <paper-card class="layout horizontal dropdown" image="/images/default-profile-pic.jpg">
+                        <div class="card-content">
+                            <a class="layout horizontal center-justified user-name">[[ _userName ]]</a>
+                            <paper-button class="layout horizontal center-justified my-account-button">My Account</paper-button>
+                        </div>
+                    </paper-card>
+                    <div class="layout vertical center-justified">
+                        <paper-button class="sign-out-button" on-tap="_signOutTapped">Sign out</paper-button>
+                    </div>
+                </div>
+            </paper-menu-button>
 
-    <ct-user-identity
-            id="identity"
-            signed-in-page="[[ signedInPage ]]"
-            signed-out-page="[[ signedOutPage ]]"
-    ></ct-user-identity>
-
-    <ct-user-api id="userApi"></ct-user-api>
-
-    <template is="dom-if" if="{{ !_signedIn }}">
-      <paper-button class="sign-in-button" on-tap="_signInTapped">[[ _buttonLabel ]]</paper-button>
-    </template>
-
-    <template is="dom-if" if="{{ _signedIn }}">
-      <paper-menu-button class="user-button" horizontal-align="right" horizontal-offset="40" vertical-align="top" vertical-offset="50">
-        <paper-icon-button class="dropdown-trigger" icon="icons:account-circle"></paper-icon-button>
-        <div class="dropdown-content">
-          <paper-card class="layout horizontal dropdown" image="/images/default-profile-pic.jpg">
-            <div class="card-content">
-              <a class="layout horizontal center-justified user-name">[[ _userName ]]</a>
-              <paper-button class="layout horizontal center-justified my-account-button">My Account</paper-button>
-            </div>
-          </paper-card>
-          <div class="layout vertical center-justified">
-            <paper-button class="sign-out-button" on-tap="_signOutTapped">Sign out</paper-button>
-          </div>
-        </div>
-      </paper-menu-button>
+        </template>
 
     </template>
 
-  </template>
+    <script>
+        Polymer({
+            is: 'ct-sign-in-button',
 
-  <script>
-      Polymer({
-          is: 'ct-sign-in-button',
-          /**
-           * Fired when signed in.
-           * @param {Object} detail The user object.
-           * @event ct-sign-in
-           */
-          /**
-           * Fired when there is an error during the signin flow.
-           * @param {Object} detail The error object.
-           * @event ct-sign-in-error
-           */
-          properties: {
-              /**
-               * Your client id obtained from client registration
-               */
-              clientId: String,
-              /**
-               * Token redirect uri registered for this client
-               */
-              tokenRedirectUri: String,
-              /**
-               * Authentication host location
-               */
-              authHostUrl: String,
-              /**
-               * API host location
-               */
-              apiHostUrl: String,
-              /**
-               * Page to after successful sign in. If not provided, the current page will be used
-               */
-              signedInPage: String,
-              /**
-               * Page to after sign out. If not provided, the current page will be used
-               */
-              signedOutPage: String
-          },
+            /**
+             * Fired when the user taps 'SIGN IN'.
+             * @event ct-sign-in
+             */
+            /**
+             * Fired when the user taps 'SIGN OUT'
+             * @event ct-sign-out
+             */
 
-          listeners: {
-              'ct-config-loaded': '_configLoaded',
-              'ct-identity-changed': '_identityChanged'
-          },
+            properties: {
+            },
 
-          observers: [
-              '_getUserProfile(_identity, _configReady)'
-          ],
+            /**
+             * Sign in user. Redirects the user to authorization server for signing in.
+             */
+            ready: function() {
+                if (CT.identity.userId) {
+                    this.$.userApi.getUser(CT.identity.userId)
+                            .then(function (request) {
+                                this._user = request.response;
+                                this._userName = this._user.firstName + ' ' + this._user.lastName;
+                                this._hasIdentity = true;
+                            }.bind(this))
+                            .catch(ExpiredTokenError, function () {
 
-          ready: function() {
-              this._signedIn = false;
-              this._identity = null;
-              this._configReady = false;
-          },
+                            }.bind(this))
+                            .catch(function (error) {
+                            }.bind(this));
+                } else {
+                    this._hasIdentity = false;
+                    this._buttonLabel = 'Sign In';
+                }
+            },
 
-          _initStoredUser: function() {
-              this.$.identity._hackPageTo(window.location.href);
-              this.$.identity.setToken(this._token)
-          },
+            _signInTapped: function() {
+                this.fire('ct-sign-in');
+            },
 
-          _noStoredUserToken: function() {
-              this._buttonLabel = 'Sign In';
-          },
-
-          _configLoaded: function() {
-              this._configReady = true;
-          },
-
-          _identityChanged: function(event, detail) {
-              if (detail) {
-                  this._identity = detail;
-              }
-          },
-
-          _signInTapped: function() {
-              this.$.identity.signIn();
-          },
-
-          /**
-           * Sign in user. Redirects the user to authorization server for signing in.
-           */
-          _getUserProfile: function() {
-              if (this._identity && this._configReady && !this._signedIn) {
-                  this.$.userApi.getUser(this._identity.userId)
-                      .then(function (request) {
-                          this._signedIn = true;
-                          this._user = request.response;
-                          this._userName = this._user.firstName + ' ' + this._user.lastName;
-                          this.fire('ct-signed-in');
-                      }.bind(this))
-                      .catch(ExpiredTokenError, function () {
-                          this._signedIn = false;
-                          this._signIn();
-                      }.bind(this))
-                      .catch(function (error) {
-                          this._signedIn = false;
-                      }.bind(this));
-              }
-          },
-
-          _signOutTapped: function() {
-              this.$.identity.signOut(window.location.href);
-              this.fire('ct-signed-out');
-          }
-      });
-  </script>
+            _signOutTapped: function() {
+                this.fire('ct-sign-out');
+            }
+        });
+    </script>
 
 </dom-module>
